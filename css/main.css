@@ -1,0 +1,33 @@
+html,
+body,
+#app,
+.el-tabs,
+.el-tabs__content {
+  height: 100%;
+}
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+ul {
+  padding: 0;
+  margin: 0;
+}
+li {
+  list-style: none;
+}
+.create-dialog {
+  position: absolute;
+  width: 600px;
+  height: 400px;
+  -webkit-box-shadow: 0 0 10px #666;
+          box-shadow: 0 0 10px #666;
+  top: 50%;
+  left: 50%;
+  margin: -200px 0 0 -300px;
+  background-color: #fff;
+}
+[v-cloak] {
+  display: none;
+}

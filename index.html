@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>友好速搭</title>
+<script src="https://cdn.bootcss.com/vue/2.5.16/vue.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<link rel="stylesheet" href="css/main.css">
+<script type="text/javascript">
+  //event 参数中有 data 属性，就是父窗口发送过来的数据
+  window.addEventListener("message", function( event ) {
+      // 把父窗口发送过来的数据显示在子窗口中
+      ready(JSON.parse(event.data));
+  }, false);
+</script>
+</head>
+<body>
+<div id="app">
+  <el-tabs type="border-card" v-model="activeName" @tab-click="handleClick">
+    <el-tab-pane label="助手导航" name="first">
+      <el-row>
+        <el-col :span="8">
+          <el-card :body-style="{ padding: '0px','text-align':'center' }"   >
+            <div style="padding: 14px;">
+              <span @click="changeTo('second')">店铺</span>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="8">
+          <el-card :body-style="{ padding: '0px','text-align':'center' }">
+            <div style="padding: 14px;">
+              <span @click="changeTo('third')">订单</span>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </el-tab-pane>
+  <el-tab-pane label="店铺创建" name="second">
+    <el-button @click="open_create()">创建</el-button>
+    <el-button @click="open_update()">编辑</el-button>
+    <el-button @click="on_delete()">删除</el-button>
+    <table>
+      <thead>
+        <th>选中状态</th>
+        <th>序号</th>
+        <th>网店名称</th>
+        <th>记账合作伙伴</th>
+        <th>员工</th>
+        <th>仓库</th>
+        <th>收款账户</th>
+        <th>操作</th>
+      </thead>
+      <tbody>
+        <tr v-for="(item,index) in shopList">
+          <td>
+            <input type="radio" :value="index" v-model="selected_id">
+            {{selected_id}}
+          </td>
+          <td>
+            {{index}}
+          </td>
+          <td>
+            {{item.name}}
+          </td>
+          <td>
+            {{item.partner}}
+          </td>
+          <td>
+            {{item.employee}}
+          </td>
+          <td>
+            {{item.store}}
+          </td>
+          <td>
+            {{item.bank}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- 创建弹窗 -->
+    <div class="create-dialog" v-cloak v-show="creating">
+      <form v-on:submit.prevent="on_submit()">
+        <ul>
+          <li>
+            <label>店铺名称</label>
+            <input type="text" v-model.trim="defaultName.title">{{defaultName.title}}
+          </li>
+          <li>
+            <label>记账合作伙伴</label>
+            <input type="text" v-model="defaultName.default_partner_id">{{defaultName.default_partner_id}}
+          </li>
+          <li>
+            <label>默认账户</label>
+            <input type="text" v-model="defaultName.default_bank_id">{{defaultName.default_bank_id}}
+          </li>
+          <li>
+            <label>默认发票类型</label>
+            <select v-model="defaultName.default_bill_type">
+              <option v-for="(item, index) in billType" :value="index + 1"> {{item}}</option>
+            </select>
+            {{defaultName.default_bill_type}}
+          </li>
+          <li>
+            <label>默认员工</label>
+            <input type="text" v-model="defaultName.default_employee_id">{{defaultName.default_employee_id}}
+          </li>
+          <li>
+            <label>默认仓库</label>
+            <select v-model="defaultName.default_store_id">
+              <option v-for="(item, index) in storeList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_store_id}}
+          </li>
+          <li>
+            <label>默认物流</label>
+            <select v-model="defaultName.default_logistics_company_id">
+              <option v-for="(item, index) in logisticsList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_logistics_company_id}}
+          </li>
+          <li>
+            <label>默认跨境仓库</label>
+            <select v-model="defaultName.default_cross_store_id">
+              <option v-for="(item, index) in storeList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_cross_store_id}}
+          </li>
+          <li>
+            <label>app_key</label>
+            <input type="text" v-model.trim="defaultName.app_key">{{defaultName.app_key}}
+          </li>
+          <li>
+            <label>app_secret</label>
+            <input type="text" v-model.trim="defaultName.app_secret">{{defaultName.app_secret}}
+          </li>
+        </ul>
+        <button type="submit">提交</button>
+        <button type="reset" @click="close_dialog()">取消</button>
+      </form>
+    </div>
+    <!-- 编辑弹窗 -->
+    <div class="create-dialog" v-cloak v-show="updating">
+      <form v-on:submit.prevent="on_update()">
+        <ul>
+          <li>
+            <label>店铺名称</label>
+            <input type="text" v-model.trim="defaultName.title">{{defaultName.title}}
+          </li>
+          <li>
+            <label>记账合作伙伴</label>
+            <input type="text" v-model="defaultName.default_partner_id">{{defaultName.default_partner_id}}
+          </li>
+          <li>
+            <label>默认账户</label>
+            <input type="text" v-model="defaultName.default_bank_id">{{defaultName.default_bank_id}}
+          </li>
+          <li>
+            <label>默认发票类型</label>
+            <select v-model="defaultName.default_bill_type">
+              <option v-for="(item, index) in billType" :value="index + 1"> {{item}}</option>
+            </select>
+            {{defaultName.default_bill_type}}
+          </li>
+          <li>
+            <label>默认员工</label>
+            <input type="text" v-model="defaultName.default_employee_id">{{defaultName.default_employee_id}}
+          </li>
+          <li>
+            <label>默认仓库</label>
+            <select v-model="defaultName.default_store_id">
+              <option v-for="(item, index) in storeList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_store_id}}
+          </li>
+          <li>
+            <label>默认物流</label>
+            <select v-model="defaultName.default_logistics_company_id">
+              <option v-for="(item, index) in logisticsList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_logistics_company_id}}
+          </li>
+          <li>
+            <label>默认跨境仓库</label>
+            <select v-model="defaultName.default_cross_store_id">
+              <option v-for="(item, index) in storeList" :value="index + 1"> {{item.name}}</option>
+            </select>{{defaultName.default_cross_store_id}}
+          </li>
+          <li v-if="false">
+            <label>app_key</label>
+            <input type="text" v-model.trim="defaultName.app_key">{{defaultName.app_key}}
+          </li>
+          <li v-if="false">
+            <label>app_secret</label>
+            <input type="text" v-model.trim="defaultName.app_secret">{{defaultName.app_secret}}
+          </li>
+        </ul>
+        <button type="submit">保存</button>
+        <button type="reset" @click="close_dialog()">取消</button>
+      </form>
+    </div>
+  </el-tab-pane>
+  <el-tab-pane label="订单创建" name="third"> third</el-tab-pane>
+</el-tabs>
+</div>
+  <script src="https://cdn.bootcss.com/axios/0.18.0/axios.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
